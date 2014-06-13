@@ -4,6 +4,7 @@ import sys
 import time
 import logging
 import re
+import iso8601
 from datetime import timedelta, datetime
 
 import elasticsearch
@@ -183,9 +184,14 @@ def show(client, **kwargs):
 def get_index_time(index_timestamp, separator='.'):
     """ Gets the time of the index.
 
-    :param index_timestamp: A string on the format YYYY.MM.DD[.HH]
+    :param index_timestamp: A string on the format YYYY.MM.DD[.HH] or an ISO8601 timestamp
     :return The creation time (datetime) of the index.
     """
+    try:
+        return iso8601.parse_date(index_timestamp.upper())
+    except:
+        pass
+
     try:
         return datetime.strptime(index_timestamp, separator.join(('%Y', '%m', '%d', '%H')))
     except ValueError:
@@ -283,14 +289,6 @@ def find_expired_data(client, object_list=[], utc_now=None, time_unit='days', ol
     for object_name in object_list:
 
         unprefixed_object_name = object_name[len(prefix):]
-
-        # find the timestamp parts (i.e ['2011', '01', '05'] from '2011.01.05') using the configured separator
-        parts = unprefixed_object_name.split(separator)
-
-        # verify we have a valid cutoff - hours for 4-part indices, days for 3-part
-        if len(parts) != required_parts:
-            logger.debug('Skipping {0} because it is of a type (hourly or daily) that I\'m not asked to evaluate.'.format(object_name))
-            continue
 
         try:
             object_time = get_index_time(unprefixed_object_name, separator=separator)
