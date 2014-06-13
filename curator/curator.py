@@ -188,7 +188,7 @@ def get_index_time(index_timestamp, separator='.'):
     :return The creation time (datetime) of the index.
     """
     try:
-        return iso8601.parse_date(index_timestamp.upper())
+        return iso8601.parse_date(index_timestamp.upper()).replace(tzinfo=None)
     except:
         pass
 
@@ -293,7 +293,7 @@ def find_expired_data(client, object_list=[], utc_now=None, time_unit='days', ol
         try:
             object_time = get_index_time(unprefixed_object_name, separator=separator)
         except ValueError:
-            logger.error('Could not find a valid timestamp for {0}'.format(object_name))
+            logger.debug('Could not find a valid timestamp for {0}'.format(object_name))
             continue
 
         # if the index is older than the cutoff
